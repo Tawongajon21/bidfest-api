@@ -250,6 +250,7 @@ let filter={};
 let now=new Date();
 let twoWeeksFromNow=new Date();
 twoWeeksFromNow.setDate(now.getDate()+14)
+
 if (search) {
     filter.propertyName=new RegExp(search,'i')
 
@@ -280,15 +281,54 @@ if (minimumPrice||maximumPrice){
  }
 }
 
-console.log(filter);
+
 if (cursor) {
     filter._id={$lt:cursor}
 }
 
 
+let query=await Auction.find();
+
+let onlineAuctions=await Auction.find().where("type").equals("Online").where("openTime").lte(now).where("closeTime").gte(now).exec()
+let onsiteAuctions=await Auction.find().where("type").equals("Onsite").where("startDateTime").gte(now).exec();
+    
+
+let auctionIds=[
+    ...onlineAuctions.map(a=>a._id),
+    ...onsiteAuctions.map(a=>a._id),
+
+]
+
+
+//let activeAuctions=await Auction.find([{type:'Online',penTime:{lte:now},closeTime:{gte:now}},{type:"Onsite",startDatetime:{gte:now}}])
+
+
+/**
+ *  [{
+  
+    or :[{
+        type:"Online",
+        openTime:{lte:now},
+        closeTime:{gte:now}
+    },
+    {
+    type:"Onsite",
+    startDatetime:{gte:now}
+    }
+    ]
+}]
+ */
+
+
+//console.log(activeAuctions);
+let lotQuery={
+    ...filter,
+    auction:{in:auctionIds}
+
+}
 //console.log(filter);
 
-     let lots=await Lot.find(filter).sort({_id:-1}).limit(Number(limit)).populate("auction").populate("bids");
+     let lots=await Lot.find(filter).where("auction").in(auctionIds).sort({_id:-1}).limit(Number(limit)).populate("auction").populate("bids");
   
      let filteredData=lots.map(lot=> {
         let isLive=lot.auction&& lot.auction.auctionDeadline>=now && lot.auction.auctionDate<twoWeeksFromNow;
@@ -305,7 +345,7 @@ if (cursor) {
 let data=filteredData
 
        // const lots=await Lot.find({auction:id}).populate("bids");
-let resultsFound=cursor? undefined: await Lot.countDocuments(filter)
+let resultsFound=cursor? undefined: await Lot.countDocuments(filter).where("auction").in(auctionIds)
         res.status(200).json({
             data,nextCursor,hasMore:!nextCursor,resultsFound
         })

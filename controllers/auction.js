@@ -177,15 +177,15 @@ try {
     let twoWeeksFromNow=new Date();
     twoWeeksFromNow.setDate(now.getDate()+14);
 
-    let liveAuctions= await Auction.find({
-        auctionDate:{
-            $gte:now,$lte:twoWeeksFromNow
-        }
-    })
-
-    let upcomingAuctions=await Auction.find({
-        auctionDate:{$gte:twoWeeksFromNow}
-    })
+ 
+    let liveOnlineAuctions=await Auction.find().where('type').equals("Online").where("openTime").lte(twoWeeksFromNow);
+    let liveOnsiteAuctions=await Auction.find().where('type').equals("Onsite").where("startDateTime").lte(twoWeeksFromNow);
+    let liveAuctions=[...liveOnlineAuctions,...liveOnsiteAuctions]
+let onlineAuctions=await Auction.find().where('type').equals("Online").where("openTime").gte(twoWeeksFromNow);
+let onsiteAuctions=await Auction.find().where("type").equals("Onsite").where("startDateTime").gte(twoWeeksFromNow)
+let upcomingAuctions=[...onlineAuctions,...onsiteAuctions];
+ 
+   
  
     const auctions=await Auction.find();
 
@@ -207,14 +207,13 @@ const getOnsiteAuctions=async(req,res)=>{
     console.log(limit);
   
 let skip= (page-1)*limit;
-let auctionType="Onsite"
-  let total= await Auction.countDocuments({auctionDate:{$gte:now},auctionType})
-    let auctions=await Auction.find({auctionDate:{$gte:now},auctionType}).skip(skip).limit(limit);
+
+  let total= await Auction.countDocuments({type:"Onsite",startDateTime:{$gte:now}})
+    let auctions=await Auction.find({type:"Onsite",startDateTime:{$gte:now}}).skip(skip).limit(limit).sort({startDateTime:1});
+   
     let hasMore=page*limit<total;
 
 
-    console.log(auctions);
-  
     res.status(200).json({
         data:auctions,
         nextPage:hasMore?page+1:null
@@ -235,9 +234,10 @@ const getOnlineAuctions=async(req,res)=>{
     let page= parseInt(req.query.page)||1;
     let limit= parseInt(req.query.limit)||10
 let skip= (page-1)*limit;
-let auctionType="Online"
-  let total= await Auction.countDocuments({auctionDate:{$gte:now},auctionType})
-    let auctions=await Auction.find({auctionDate:{$gte:now},auctionType}).skip(skip).limit(limit);
+
+
+  let total= await Auction.find().where("type").equals("Online").where("openTime").lte(now).where("closeTime").gte(now).countDocuments()
+    let auctions=await Auction.find().where("type").equals("Online").where("closeTime").gte(now).skip(skip).limit(limit);
     let hasMore=page*limit<total;
 
     res.status(200).json({

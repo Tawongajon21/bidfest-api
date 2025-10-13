@@ -33,7 +33,7 @@ if (signature) {
     return false
 }
 const ValidatePassword=async(enteredPassword,savedPassword,newUser)=>{
-  console.log(enteredPassword,savedPassword,newUser);
+  
  if (bcryptjs.compareSync(enteredPassword,savedPassword)) {
  const signature=generateSignature({
   _id:newUser._id,

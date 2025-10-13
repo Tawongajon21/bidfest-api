@@ -22,6 +22,7 @@ const storage=multer.diskStorage({
 let allowedTypes=[
     "image/jpeg",
     "image/jpg",
+    "image/JPG",
     "image/png",
     "image/gif",
     "image/webp",

@@ -151,7 +151,7 @@ try {
 let userId=user._id
 
     if (user) {
-        let biddings=await Bidding.find({user:userId}).populate('lot',"auction propertyName code location auctionDate auctionDeadline mileage keyAvailable exteriorImages interiorImages deadline startingPrice currentPrice expectedPrice sold lotImages").populate("user",'_id').populate("auction","_id auctionDeadline auctionTime")
+        let biddings=await Bidding.find({user:userId}).populate('lot',"auction propertyName code location auctionDate auctionDeadline mileage keyAvailable exteriorImages interiorImages deadline startingPrice currentPrice expectedPrice sold lotImages openTime closeTime").populate("user",'_id').populate("auction","_id auctionDeadline auctionTime")
 
         let lots=await Lots.find().populate({
         path:"bids",
@@ -161,7 +161,7 @@ let userId=user._id
         }
      })
 
-     let userBids=await Bidding.find().populate("lot","auction propertyName auctionTime code location auctionDate auctionDeadline mileage keyAvailable exteriorImages interiorImages deadline startingPrice currentPrice expectedPrice sold lotImages").populate("auction","auctionDate auctionDeadline auctionTime code location auctionDate auctionDeadline mileage keyAvailable exteriorImages interiorImages deadline startingPrice currentPrice expectedPrice sold").lean();
+     let userBids=await Bidding.find().populate("lot","auction propertyName auctionTime code location auctionDate auctionDeadline mileage keyAvailable exteriorImages interiorImages deadline startingPrice currentPrice expectedPrice sold lotImages openTime closeTime").populate("auction","auctionDate auctionDeadline auctionTime code location auctionDate auctionDeadline mileage keyAvailable exteriorImages interiorImages deadline startingPrice currentPrice expectedPrice sold openTime closeTime").lean();
     let grouped={};
     userBids.forEach(bid=>{
         console.log(bid);

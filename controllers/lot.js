@@ -105,6 +105,7 @@ try {
     let id=req.params.id;
  
     const lots=await Lot.find({auction:id}).populate("bids");
+    console.log(lots);
     res.status(200).json(lots)
 } catch (error) {
     res.status(500).json({msg:"Server Error"})
@@ -115,7 +116,14 @@ const getLot=async(req,res)=>{
     console.log(id);
    
 try {
-    const lot=await Lot.findById(id).populate("bids").populate("auction");
+    const lot=await Lot.findById(id).populate("auction").populate({
+        path:"bids",
+        populate:{
+            path:"user",
+            select:"_id"
+        }
+    });
+ 
     if (!lot) {
         res.status(200).json({msg:"Lot not found"})
     }else{

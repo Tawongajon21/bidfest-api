@@ -65,6 +65,8 @@ try {
     if (!existingUser) {
         res.status(401).json({msg:"User does not exist please sign up"})
        } else {
+        console.log(password);
+        console.log(existingUser.password);
         const response=await ValidatePassword(password,existingUser.password,existingUser)
         if (response==="wrong details") {
             res.status(401).json({
@@ -93,6 +95,7 @@ try {
                 }
        }
 } catch (error) {
+    console.log(error);
     res.status(500).json({msg:"Server error"})
 }
 

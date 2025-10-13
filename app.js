@@ -48,99 +48,80 @@ setInterval(checkAuctionDeadlines,30*60*1000)
 
 
 
-setInterval(
-async()=>{
-
-
-  let io=getIO()
-  let now= new Date();
-
-
-
-
-  let auctions=await Auction.find({auctionType:"Online"}).populate("lots")
-
-  for(const auction of auctions){
-
-let deadlineDate=auction.auctionDeadline.toISOString().split("T")[0];
-
-let fullDeadline=new Date(`${deadlineDate}T${auction.auctionTime}:00Z`);
-
-if (fullDeadline < now) {
-
-  for(let lot of auction.lots){
-
-
-    let bids=await Bid.find({lot:lot._id}).sort({amount:-1}).populate({path:"user",select:"name surname"}).populate("lot");
-
-   
-    if (bids.length>0) {
-      let winner=bids[0].user._id;
-
-      let findNotification=await Notification.findOne({messageId:auction._id,userId:winner})
-      if (!findNotification) {
-     let winnerNote=await Notification.create({
-          userId:winner,
-          message:`Hey ${bids[0].user.name}, congratulations you have won the bid for the ${lot.propertyName} on the auction ${auction.auctionName} held at ${auction.auctionLocation}.One of our staff members will contact you and inform you about the next steps.Once again congratulations and we wish to see you soon.`,
-          read:false,
-          messageId:`${auction._id}${winner}${now}`,
-          auction:auction._id,
-          lot:lot._id
-        });
-        
-       let winnerSocket=await OnlineUsers.findOne({userId:winner});
-        if (winnerSocket) {
-          io.to(winnerSocket.socketId).emit("notification",{message:winnerNote.message})
-    
-        }
-    for (let i = 1; i < bids.length; i++) {
-    let bidder=bids[i].user._id;
-    let message=`Hey ${bids[0].user.name}, It is unfortunate that your bid did not win and came on number ${i+1} for ${lot.propertyName} at the ${auction.auctionName} held at ${auction.auctionLocatio}.We appreciate your effort in participating.We wish you all the best in the next edition of our auctions.`
-    if (!findNotification) {
-      let note=await Notification.create({
-        userId:bidder,
-        message,
-      
-        messageId:`${auction._id}${bidder}${now}`,
-        auction:auction._id,
-        lot:lot._id,
-      
-    
-        read:false
-      })
-      let socket=await OnlineUsers.findOne({userId:bidder});
-
-
-
-      if (socket) {
-        io.to(socket.socketId).emit("notification",{message:note.message})
-      }
-    }
-
-    }
-      }
-
-      }
-let getLot= await Lot.findById(lot._id);
-getLot.sold=true;
-await getLot.save();
-
-
-
-
-
-
-    }
-}
-  }
-
-
-}
-
-,10*1000)
 
 */
 
+setInterval(
+  async()=>{
+let io=getIO()
+let now= new Date();
+let auctions=await Auction.find().where("type").equals("Online").where("closeTime").lt(now).populate("lots")
+for(const auction of auctions){
+      for(let lot of auction.lots){
+  let bids=await Bid.find({lot:lot._id}).sort({amount:-1}).populate({path:"user",select:"name surname"}).populate("lot");
+        if (bids.length>0) {
+          let winner=bids[0].user._id;
+
+          let findNotification=await Notification.findOne({messageId:auction._id,userId:winner})
+          if (!findNotification) {
+         let winnerNote=await Notification.create({
+              userId:winner,
+              message:`Hey ${bids[0].user.name}, congratulations you have won the bid for the ${lot.propertyName} on the auction ${auction.name}.One of our staff members will contact you and inform you about the next steps.Once again congratulations and we wish to see you soon.`,
+              read:false,
+              messageId:`${auction._id}${winner}${now}`,
+              auction:auction._id,
+              lot:lot._id
+            });
+            
+           let winnerSocket=await OnlineUsers.findOne({userId:winner});
+            if (winnerSocket) {
+              io.to(winnerSocket.socketId).emit("notification",{message:winnerNote.message})
+        
+            }
+        for (let i = 1; i < bids.length; i++) {
+        let bidder=bids[i].user._id;
+        let message=`Hey ${bids[0].user.name}, It is unfortunate that your bid did not win and came on number ${i+1} for ${lot.propertyName} at the ${auction.name}.We appreciate your effort in participating.We wish you all the best in the next edition of our auctions.`
+        if (!findNotification) {
+          let note=await Notification.create({
+            userId:bidder,
+            message,
+          
+            messageId:`${auction._id}${bidder}${now}`,
+            auction:auction._id,
+            lot:lot._id,
+          
+        
+            read:false
+          })
+          let socket=await OnlineUsers.findOne({userId:bidder});
+    
+    
+    
+          if (socket) {
+            io.to(socket.socketId).emit("notification",{message:note.message})
+          }
+        }
+    
+        }
+          }
+    
+          }
+    let getLot= await Lot.findById(lot._id);
+    getLot.sold=true;
+    await getLot.save();
+    
+    
+    
+    
+    
+    
+        }
+
+ 
+    }
+  }
+  ,10*1000)
+  
 const notificationRoutes = require('./routes/notifications');
 
 const auctionRoutes=require("./routes/auction")

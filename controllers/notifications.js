@@ -53,7 +53,7 @@ try {
 
     if (user) {
         let userId=user._id;
-
+console.log(userId);
 let limit = parseInt(req.query.limit) || 5;
 let cursor=req.query.cursor
 const query={userId};

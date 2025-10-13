@@ -8,8 +8,25 @@ const uploadMiddleware = multer({ dest: 'uploads/' });
 
 const isAuth = require('../middlewares/auth');
 const auctionRoutes= express.Router();
+const storage=multer.diskStorage({
+    destination:(req,file,cb)=>{
+        cb(null,"./uploads/")
+     
 
-auctionRoutes.post("/add-auction",isAuth,uploadMiddleware.any('images'),createAuction);
+    },
+    filename:(req,file,cb)=>{
+        cb(null,Date.now()+file.originalname);
+    }
+})
+const upload=multer({
+    storage,
+    limits:{
+        fileSize:100*1024*1024
+    }
+})
+
+
+auctionRoutes.post("/add-auction",isAuth,upload.any('images'),createAuction);
 auctionRoutes.get("/get-auctions",getAuctions);
 auctionRoutes.get("/get-online-auctions",getOnlineAuctions);
 auctionRoutes.get("/get-onsite-auctions",getOnsiteAuctions);
